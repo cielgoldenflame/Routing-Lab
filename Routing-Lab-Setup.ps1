@@ -1,3 +1,5 @@
+$scriptdir = Split-Path $Script:MyInvocation.MyCommand.Path
+
 $rgname = Read-Host -Prompt "What would you like to be your Resource Group name?`n"
 Clear-Host
 $x = Read-Host -Prompt "Where would you like your Resource Group located?
@@ -176,7 +178,13 @@ switch ($rt) {
 
         $hname = Read-Host -Prompt "Which VM will act as the hop?`n$vms`n"
 
-        $hopip = (Get-AzNetworkInterface -ResourceGroupName $rgname -Name "$hname*").IpConfigurations.privateipaddress
+        $nic = (Get-AzNetworkInterface -ResourceGroupName $rgname -Name "$hname*")
+            $nic.EnableIPForwarding = $true
+            Set-AzNetworkInterface -NetworkInterface $nic -AsJob
+            Invoke-AzVMRunCommand -ResourceGroupName $rgname -VMName $hname -CommandId 'RunPowerShellScript' -ScriptPath "$scriptdir\install-router.ps1"
+            Restart-AzVM -ResourceGroupName $rgname -Name $hname -AsJob
+
+        $hopip = $nic.IpConfigurations.privateipaddress
     
         $Route = New-AzRouteConfig -Name $rname -AddressPrefix "$dest" -NextHopType VirtualAppliance -NextHopIpAddress $hopip
 
@@ -205,3 +213,40 @@ switch ($rt) {
         }
     }
 }
+
+Clear-Host
+
+$lbq = Read-Host -Prompt "Would you like to configure your Load Balancer here?`nY\N`n"
+
+switch ($lbq) {
+    'N' {}
+    'Y' {}
+}
+
+Clear-Host
+
+$dnsq = Read-Host -Prompt "Would you like to configure a Private DNS Zone?`nY\N`n"
+
+switch ($dnsq) {
+    'N' {}
+    'Y' {
+        Clear-Host
+        $pdzname = Read-Host -Prompt "What will be the name of your Private DNS Zone?`nNote: Please use proper naming context (i.e. name.com)`n"
+
+        New-AzPrivateDnsZone -Name "$pdzname" -ResourceGroupName $rgname 
+
+        $linkname = Read-Host -Prompt "what will be the name of the VNet Link?"
+        New-AzPrivateDnsVirtualNetworkLink -ResourceGroupName $rgname -ZoneName "$pdzname" -Name $linkname -VirtualNetworkId $vnet.Id -EnableRegistration
+
+        switch ($lbq) {
+            'N' {}
+            'Y' {$lbarec = Read-Host -Prompt 'What would you like as the name of the "A" record for your Load Balancer'
+                $lbip = (Get-AzLoadBalancer -ResourceGroupName $rgname -Name $lbname)#############
+                New-AzPrivateDnsRecordSet -ResourceGroupName $rgname -Name $lbarec -RecordType A -Ttl 3600 -ZoneName "$pdzname" -PrivateDnsRecord (New-AzPrivateDnsRecordConfig -Ipv4Address $lbip)
+            }
+        }
+        
+    }
+}
+
+Invoke-AzVMRunCommand
