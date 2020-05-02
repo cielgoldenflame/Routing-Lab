@@ -142,3 +142,66 @@ while ($o -lt $vmx) {
 
 ++$o
 }
+
+Clear-Host
+
+$job = (Get-Job -Newest 1).Id
+
+Wait-Job -Id $job
+
+$rt = Read-Host -Prompt "Would you like to create your Route Table here?`nY\N`n"
+
+switch ($rt) {
+    'N' {}
+    'Y' {
+        Clear-Host
+
+        $rtname = Read-Host -Prompt "what will be the name of your Route Table?`n"
+
+        Clear-Host
+
+        $rname = Read-Host -Prompt "What will be the name of your Route?`n"
+
+        $subs = $vnet.Subnets.Name
+
+        Clear-Host
+
+        $d = Read-Host "What subnet will be the destination?`n$subs`n"
+        
+        $dest = (Get-AzVirtualNetworkSubnetConfig -Name $d -VirtualNetwork $vnet).AddressPrefix
+
+        $vms = (Get-AzVM -ResourceGroupName $rgname).Name
+
+        Clear-Host
+
+        $hname = Read-Host -Prompt "Which VM will act as the hop?`n$vms`n"
+
+        $hopip = (Get-AzNetworkInterface -ResourceGroupName $rgname -Name "$hname*").IpConfigurations.privateipaddress
+    
+        $Route = New-AzRouteConfig -Name $rname -AddressPrefix "$dest" -NextHopType VirtualAppliance -NextHopIpAddress $hopip
+
+        New-AzRouteTable -Name $rtname -ResourceGroupName $rgname -Location $rglocation -Route $Route
+
+        Clear-Host
+
+        [int]$rtsublinknum = Read-Host -Prompt "How many subnets will be added to the route table?`n"
+
+        $p = 0
+        while ($p -lt $rtsublinknum) {
+            
+            $subs = $vnet.Subnets.Name
+
+            Clear-Host
+            
+            $sname = Read-Host -Prompt "What is the name of the $($p+1) subnet to link?`n$subs`n"
+            
+            $ap = (Get-AzVirtualNetworkSubnetConfig -Name $sname -VirtualNetwork $vnet).AddressPrefix
+
+            $routetable = Get-AzRouteTable -ResourceGroupName $rgname -Name $rtname
+
+            Set-AzVirtualNetworkSubnetConfig -Name $sname -VirtualNetwork $vnet -RouteTable $routetable -AddressPrefix $ap | Set-AzVirtualNetwork
+           
+            $p++
+        }
+    }
+}
