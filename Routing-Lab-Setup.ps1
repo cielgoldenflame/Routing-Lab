@@ -242,7 +242,24 @@ switch ($lbq) {
         $lbrule = New-AzLoadBalancerRuleConfig -Name $lbrname -FrontendIPConfiguration $frontend -BackendAddressPool $backendAddressPool -Probe $probe -Protocol "Tcp" -FrontendPort 80 -BackendPort 80 -IdleTimeoutInMinutes 15 -EnableFloatingIP -LoadDistribution SourceIP
         
         New-AzLoadBalancer -Name $lbname -ResourceGroupName $rgname -Location $rglocation -FrontendIpConfiguration $frontend -BackendAddressPool $backendAddressPool -Probe $probe -LoadBalancingRule $lbrule
+        
+        #Clear-host
+        [int]$benumber = Read-Host -Prompt "How many VMs will be added to the backend?`n"
+        $u = 0
+        while ($u -lt $benumber) {
+            #clear-host
+            $vms = (Get-AzVM -ResourceGroupName $rgname).Name
+            $bevmname = Read-Host -Prompt "Please type the name of VM $($u + 1) to be added to the LB backend.`n$vms`n"
+
+            $benic = Get-AzNetworkInterface -ResourceGroupName $rgname -Name "$bevmname*"
+            $lb = Get-AzLoadBalancer -ResourceGroupName $rgname -Name $lbname
+            $backend = Get-AzLoadBalancerBackendAddressPoolConfig -name $bename -LoadBalancer $lb
+            $benic.IpConfigurations[0].LoadBalancerBackendAddressPools = $backend
+            Set-AzNetworkInterface -NetworkInterface $benic -AsJob
+            Invoke-AzVMRunCommand -ResourceGroupName $rgname -VMName $bevmname -CommandId 'RunPowerShellScript' -ScriptPath "$scriptdir\install-iis.ps1" -AsJob
         }
+    
+    }
 }
 
 #clear-host
