@@ -1,7 +1,7 @@
 $scriptdir = Split-Path $Script:MyInvocation.MyCommand.Path
 
 $rgname = Read-Host -Prompt "What would you like to be your Resource Group name?`n"
-Clear-Host
+#clear-host
 $x = Read-Host -Prompt "Where would you like your Resource Group located?
 
 1 : Central US
@@ -23,7 +23,7 @@ switch ($x) {
 
 New-AzResourceGroup -Name $rgname -Location $rglocation
 
-Clear-Host
+#clear-host
 
 $vnetname = Read-Host -Prompt "What will be the name of your VNet?`n"
 
@@ -31,25 +31,25 @@ New-AzVirtualNetwork -AddressPrefix '10.0.0.0/16' -Name $vnetname -Location $rgl
 
 $vnet = Get-AzVirtualNetwork -Name $vnetname -ResourceGroupName $rgname
 
-Clear-Host
+#clear-host
 
 [int]$n = Read-Host -Prompt "How many subnets will there be?`n"
 $i = 0
 while ($i -lt $n) {
-    Clear-Host
+    #clear-host
 
-    $subname = Read-Host -Prompt "What will be the name of Subnet $i`n"
+    $subname = Read-Host -Prompt "What will be the name of Subnet $($i+1)`n"
     Add-AzVirtualNetworkSubnetConfig -Name $subname -VirtualNetwork $vnet -AddressPrefix "10.0.$i.0/24" | Set-AzVirtualNetwork
     ++$i
 }
 
-Clear-Host
+#clear-host
 
 $asname = Read-Host -Prompt "What will your availability set be called?`n"
 
 New-AzAvailabilitySet -ResourceGroupName $rgname -Name $asname -Location $rglocation -PlatformUpdateDomainCount "3" -PlatformFaultDomainCount "2" -Sku Aligned
 
-Clear-Host
+#clear-host
 
 [int]$vmx = Read-Host -Prompt "How many VMs will you need?`n" 
 
@@ -58,11 +58,11 @@ $vnet = Get-AzVirtualNetwork -Name $vnetname -ResourceGroupName $rgname
 $o = 0
 while ($o -lt $vmx) {
 
-    Clear-Host
+    #clear-host
 
     $vmName = Read-Host -Prompt "What will be the name of VM $o`n"
 
-    Clear-Host
+    #clear-host
 
     $version = Read-Host -Prompt "Will VM $o be:`n1 : Server`n2 : Client`n"
 
@@ -75,7 +75,7 @@ while ($o -lt $vmx) {
                 $skuName = 'rs5-pro'}
     }
     
-    Clear-Host
+    #clear-host
 
     $size = Read-Host -Prompt "Please select VM Size`n1 : Standard_DS1_v2 (1 CPU 3.5GB RAM)`n2 : Standard_DS2_v2 (2 CPU 7GB RAM)`n"
     
@@ -88,7 +88,7 @@ while ($o -lt $vmx) {
     $adminPassword = 'Pa55w.rd1234'
     $adminCreds = New-Object PSCredential $adminUsername, ($adminPassword | ConvertTo-SecureString -AsPlainText -Force)
 
-    Clear-Host
+    #clear-host
 
     $as = Read-Host -Prompt "Will this VM be a part of a Availability Set?`nY/N"
 
@@ -98,7 +98,7 @@ while ($o -lt $vmx) {
 
             $subs = $vnet.Subnets.Name
 
-            Clear-Host
+            #clear-host
 
             $subnet = Read-Host "What subnet will this VM be attached to?`n$subs`n"
             
@@ -121,7 +121,7 @@ while ($o -lt $vmx) {
         'N' {
             $subs = $vnet.Subnets.Name
 
-            Clear-Host
+            #clear-host
 
             $subnet = Read-Host "What subnet will this VM be attached to?`n$subs`n"
             
@@ -145,28 +145,24 @@ while ($o -lt $vmx) {
 ++$o
 }
 
-Clear-Host
-
-$job = (Get-Job -Newest 1).Id
-
-Wait-Job -Id $job
+#clear-host
 
 $rt = Read-Host -Prompt "Would you like to create your Route Table here?`nY\N`n"
 
 switch ($rt) {
     'N' {}
     'Y' {
-        Clear-Host
+        #clear-host
 
         $rtname = Read-Host -Prompt "what will be the name of your Route Table?`n"
 
-        Clear-Host
+        #clear-host
 
         $rname = Read-Host -Prompt "What will be the name of your Route?`n"
 
         $subs = $vnet.Subnets.Name
 
-        Clear-Host
+        #clear-host
 
         $d = Read-Host "What subnet will be the destination?`n$subs`n"
         
@@ -174,7 +170,7 @@ switch ($rt) {
 
         $vms = (Get-AzVM -ResourceGroupName $rgname).Name
 
-        Clear-Host
+        #clear-host
 
         $hname = Read-Host -Prompt "Which VM will act as the hop?`n$vms`n"
 
@@ -190,7 +186,7 @@ switch ($rt) {
 
         New-AzRouteTable -Name $rtname -ResourceGroupName $rgname -Location $rglocation -Route $Route
 
-        Clear-Host
+        #clear-host
 
         [int]$rtsublinknum = Read-Host -Prompt "How many subnets will be added to the route table?`n"
 
@@ -199,7 +195,7 @@ switch ($rt) {
             
             $subs = $vnet.Subnets.Name
 
-            Clear-Host
+            #clear-host
             
             $sname = Read-Host -Prompt "What is the name of the $($p+1) subnet to link?`n$subs`n"
             
@@ -214,39 +210,63 @@ switch ($rt) {
     }
 }
 
-Clear-Host
+#clear-host
 
 $lbq = Read-Host -Prompt "Would you like to configure your Load Balancer here?`nY\N`n"
 
 switch ($lbq) {
     'N' {}
-    'Y' {}
+    'Y' {
+        #clear-host
+        $lbname = Read-Host -Prompt "What will be the name of your Load Balancer?`n"
+        
+        #clear-host
+        $fename = Read-Host -Prompt "What will be the name of the Front End IP Config?`n"
+        
+        #clear-host
+        $subs = $vnet.Subnets.Name
+        $fesubname = Read-Host -Prompt "What subnet will the Load Balancer be in?`n$subs`n"
+        $fesub = (Get-AzVirtualNetworkSubnetConfig -Name $fesubname -VirtualNetwork $vnet)
+        $frontend = New-AzLoadBalancerFrontendIpConfig -Name $fename -Subnet $fesub
+
+        #clear-host
+        $bename = Read-Host -Prompt "What will be the name of your Back End?`n"
+        $backendAddressPool = New-AzLoadBalancerBackendAddressPoolConfig -Name $bename
+
+        #clear-host
+        $pname = Read-Host -Prompt "What will be the name of your Probe?`n"
+        $probe = New-AzLoadBalancerProbeConfig -Name $pname -Protocol "http" -Port 80 -IntervalInSeconds 15 -ProbeCount 2 -RequestPath "healthcheck.aspx"
+        
+        #clear-host
+        $lbrname = Read-Host -Prompt "What will be the name of your load balancing rule?`n"
+        $lbrule = New-AzLoadBalancerRuleConfig -Name $lbrname -FrontendIPConfiguration $frontend -BackendAddressPool $backendAddressPool -Probe $probe -Protocol "Tcp" -FrontendPort 80 -BackendPort 80 -IdleTimeoutInMinutes 15 -EnableFloatingIP -LoadDistribution SourceIP
+        
+        New-AzLoadBalancer -Name $lbname -ResourceGroupName $rgname -Location $rglocation -FrontendIpConfiguration $frontend -BackendAddressPool $backendAddressPool -Probe $probe -LoadBalancingRule $lbrule
+        }
 }
 
-Clear-Host
+#clear-host
 
 $dnsq = Read-Host -Prompt "Would you like to configure a Private DNS Zone?`nY\N`n"
 
 switch ($dnsq) {
     'N' {}
     'Y' {
-        Clear-Host
+        #clear-host
         $pdzname = Read-Host -Prompt "What will be the name of your Private DNS Zone?`nNote: Please use proper naming context (i.e. name.com)`n"
 
         New-AzPrivateDnsZone -Name "$pdzname" -ResourceGroupName $rgname 
 
-        $linkname = Read-Host -Prompt "what will be the name of the VNet Link?"
+        $linkname = Read-Host -Prompt "What will be the name of the VNet Link?`n"
         New-AzPrivateDnsVirtualNetworkLink -ResourceGroupName $rgname -ZoneName "$pdzname" -Name $linkname -VirtualNetworkId $vnet.Id -EnableRegistration
 
         switch ($lbq) {
             'N' {}
             'Y' {$lbarec = Read-Host -Prompt 'What would you like as the name of the "A" record for your Load Balancer'
-                $lbip = (Get-AzLoadBalancer -ResourceGroupName $rgname -Name $lbname)#############
-                New-AzPrivateDnsRecordSet -ResourceGroupName $rgname -Name $lbarec -RecordType A -Ttl 3600 -ZoneName "$pdzname" -PrivateDnsRecord (New-AzPrivateDnsRecordConfig -Ipv4Address $lbip)
+                $lbip = (Get-AzLoadBalancer -ResourceGroupName $rgname -Name $lbname).FrontendIpConfigurations.PrivateIpAddress
+                New-AzPrivateDnsRecordSet -ResourceGroupName $rgname -Name $lbarec -RecordType A -Ttl 3600 -ZoneName "$pdzname" -PrivateDnsRecord (New-AzPrivateDnsRecordConfig -Ipv4Address "$lbip")
             }
         }
         
     }
 }
-
-Invoke-AzVMRunCommand
