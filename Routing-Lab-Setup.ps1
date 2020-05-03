@@ -60,11 +60,11 @@ while ($o -lt $vmx) {
 
     #clear-host
 
-    $vmName = Read-Host -Prompt "What will be the name of VM $o`n"
+    $vmName = Read-Host -Prompt "What will be the name of VM $($o+1)`n"
 
     #clear-host
 
-    $version = Read-Host -Prompt "Will VM $o be:`n1 : Server`n2 : Client`n"
+    $version = Read-Host -Prompt "Will VM $($o+1) be:`n1 : Server`n2 : Client`n"
 
     switch ($version) {
         '1' {   $publisherName = 'MicrosoftWindowsServer'
@@ -257,6 +257,7 @@ switch ($lbq) {
             $benic.IpConfigurations[0].LoadBalancerBackendAddressPools = $backend
             Set-AzNetworkInterface -NetworkInterface $benic -AsJob
             Invoke-AzVMRunCommand -ResourceGroupName $rgname -VMName $bevmname -CommandId 'RunPowerShellScript' -ScriptPath "$scriptdir\install-iis.ps1" -AsJob
+            ++$u
         }
     
     }
