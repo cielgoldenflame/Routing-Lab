@@ -18,6 +18,7 @@ This is an interactive script I put together to setup a repetitive in class lab.
 - Please check your spelling; failure to do so can effect the deployment of some resources. 
 - I did not put any error checking in because I am a novice. Use at your own risk.
 - Will work better if you use the "Microsoft Azure Sponsorship 2" subscription.
+- Its not beautified yet, so expect it to look about as good as anyone at waking up 4 AM without energy supplicants.
     
 ### Hope this helps y'all save some time!
 
