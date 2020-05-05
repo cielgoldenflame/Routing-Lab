@@ -235,7 +235,7 @@ switch ($lbq) {
 
         #clear-host
         $pname = Read-Host -Prompt "What will be the name of your Probe?`n"
-        $probe = New-AzLoadBalancerProbeConfig -Name $pname -Protocol "http" -Port 80 -IntervalInSeconds 15 -ProbeCount 2 -RequestPath "healthcheck.aspx"
+        $probe = New-AzLoadBalancerProbeConfig -Name $pname -Protocol "TCP" -Port 80 -IntervalInSeconds 15 -ProbeCount 2
         
         #clear-host
         $lbrname = Read-Host -Prompt "What will be the name of your load balancing rule?`n"
